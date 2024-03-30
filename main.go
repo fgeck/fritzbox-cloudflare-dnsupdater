@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/cloudflare/cloudflare-go"
 	"github.com/gorilla/mux"
@@ -30,6 +29,7 @@ func main() {
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
+	email := r.URL.Query().Get("email")
 	zone := r.URL.Query().Get("zone")
 	record := r.URL.Query().Get("record")
 	ipv4 := r.URL.Query().Get("ipv4")
@@ -48,13 +48,13 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api, err := cloudflare.New(token)
+	api, err := cloudflare.New(token, email)
 	if err != nil {
 		http.Error(w, `{"status": "error", "message": "Failed to create Cloudflare API client."}`, http.StatusInternalServerError)
 		return
 	}
 
-	zones, err := api.ListZones(zone)
+	zones, err := api.ListZones(r.Context(), zone)
 	if err != nil || len(zones) == 0 {
 		http.Error(w, `{"status": "error", "message": "Failed to find zone or zone does not exist."}`, http.StatusNotFound)
 		return
